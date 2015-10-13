@@ -1,15 +1,11 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: yes
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 
 After unzipping the data file, the next step is to **load** the data. We then **convert** *date* strings to date class instances, and *interval* integer identifiers to factor levels.
-```{r echo=TRUE}
+
+```r
 raw <- read.csv("activity.csv")
 tidy <- transform(raw, interval = as.factor(interval))   #not really necessary
 tidy$date <- as.Date(tidy$date, "%Y-%m-%d")
@@ -21,7 +17,8 @@ tidy$date <- as.Date(tidy$date, "%Y-%m-%d")
 For this part of the assignment we **ignore the missing values** in the dataset, and remove the observations containing NAs from the dataset.
 
 The following histogram depicts the frequency for the total number of steps taken each day.
-```{r hist_ignoreNA, echo=TRUE, fig.height=5}
+
+```r
 suppressMessages(library(dplyr))
 steps.by.date <- 
     tidy %>%
@@ -38,21 +35,25 @@ hist(steps.by.date$steps, breaks = groups,    #hist break increment: 1000
      main = "Histogram of steps per day (NAs removed)")
 ```
 
+![](PA1_template_files/figure-html/hist_ignoreNA-1.png) 
+
 The **mean** and the **median** of the total number of steps taken per day is as follows:
-```{r echo=TRUE}
+
+```r
 mean.per.date   <- format(mean(steps.by.date$steps), 
                           trim = TRUE, nsmall = 2, scientific = FALSE)
 median.per.date <- format(median(steps.by.date$steps), 
                           trim = TRUE, nsmall = 0, scientific = FALSE)
 ```
-- Mean (*NAs ignored*): **`r mean.per.date`**
-- Median (*NAs ignored*): **`r median.per.date`**
+- Mean (*NAs ignored*): **10766.19**
+- Median (*NAs ignored*): **10765**
 
 
 ## What is the average daily activity pattern?
 
 This is a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
-```{r average_steps, echo=TRUE}
+
+```r
 steps.by.interval <- 
     tidy %>%
     filter(!is.na(steps)) %>% 
@@ -73,31 +74,36 @@ axis(side = 1, at = seq(1, 288, by = 24), tick = TRUE, lwd = 0, lwd.ticks = 1,
 )
 ```
 
+![](PA1_template_files/figure-html/average_steps-1.png) 
+
 The 5-minute interval, on average across all the days in the dataset, that contains the **maximum number of steps** is given by
-```{r echo=TRUE}
+
+```r
 most.active <- with(steps.by.interval, interval[which.max(steps)])
 ```
-and is the interval with identifier **`r most.active`** (first digit(s) correspond to the hour of the day, last two digits to the minutes of the hour).
+and is the interval with identifier **835** (first digit(s) correspond to the hour of the day, last two digits to the minutes of the hour).
 
 
 ## Imputing missing values
 
 The presence of missing days may introduce bias into some calculations or summaries of the data. In previous sections we have ignored NA values by removing the corresponding observations from the dataset.
 
-The dataset contains `r nrow(tidy)` rows. The total number of **missing values** in the dataset is as follows.
-```{r echo=TRUE}
+The dataset contains 17568 rows. The total number of **missing values** in the dataset is as follows.
+
+```r
 na.date <- sum(is.na(tidy$date))
 na.interval <- sum(is.na(tidy$interval))
 na.steps <- sum(is.na(tidy$steps))
 ```
-- *date* column: `r na.date` rows with NA
-- *interval* column: `r na.interval` rows with NA
-- *steps* column: `r na.steps` rows with NA
+- *date* column: 0 rows with NA
+- *interval* column: 0 rows with NA
+- *steps* column: 2304 rows with NA
 
 In this section we impute the missing STEP values. The strategy we opt for is to **fill in the NAs with the mean value for the corresponding 5-minute interval**. Those mean values have been calculated in the previous section (*steps.by.interval* variable).
 
 We create a new dataset that is equal to the original dataset but with the missing data filled in. The new dataset is contained in the *tidy.complete* variable.
-```{r echo=TRUE}
+
+```r
 size <- nrow(tidy)
 steps.complete <- vector(length = size)
 for (i in 1:size) {
@@ -112,7 +118,8 @@ tidy.complete <- cbind(tidy[, c("date", "interval")], steps = steps.complete)
 ```
 
 A histogram depicting the frequency for the total number of steps taken each day is given below. In contrast to the first histogram that ignored NA values this one takes NA values into account, as discussed above.
-```{r hist_imputeNA, echo=TRUE, fig.height=5}
+
+```r
 steps.by.date.cmp <- 
     tidy.complete %>%
     group_by(date) %>% 
@@ -124,23 +131,27 @@ hist(steps.by.date.cmp$steps, breaks = groups,    #hist break increment: 1000
      main = "Histogram of steps per day (With NAs imputed)")
 ```
 
+![](PA1_template_files/figure-html/hist_imputeNA-1.png) 
+
 The **mean** and the **median** of the total number of steps taken per day (with NAs imputed) is as follows:
-```{r echo=TRUE}
+
+```r
 mean.per.date.cmp   <- format(mean(steps.by.date.cmp$steps), 
                               trim = TRUE, nsmall = 2, scientific = FALSE)
 median.per.date.cmp <- format(median(steps.by.date.cmp$steps), 
                               trim = TRUE, nsmall = 0, scientific = FALSE)
 ```
-- Mean (*NAs imputed*): **`r mean.per.date.cmp`**
-- Median (*NAs imputed*): **`r median.per.date.cmp`**
+- Mean (*NAs imputed*): **10765.64**
+- Median (*NAs imputed*): **10762**
 
-Recall that with NAs ignored (removed from the dataset) for the number of steps per day the mean was **`r mean.per.date`**, and the median **`r median.per.date`**. The mean has changed only slightly, but as we see from the two histograms the frequency of the segment containing the mean / median has increased with imputing NAs (frequency > 15 instead of 10). Therefore, **imputing NAs has reinforced the values around the mean**.     
+Recall that with NAs ignored (removed from the dataset) for the number of steps per day the mean was **10766.19**, and the median **10765**. The mean has changed only slightly, but as we see from the two histograms the frequency of the segment containing the mean / median has increased with imputing NAs (frequency > 15 instead of 10). Therefore, **imputing NAs has reinforced the values around the mean**.     
 On the other hand the change in the median is due to the fact that imputing NAs has changed the number of days taken into consideration.
-```{r echo=TRUE}
+
+```r
 no.days <- nrow(steps.by.date)
 no.days.cmp <- nrow(steps.by.date.cmp)
 ```
-Initially the days where **`r no.days`**, but with imputed NA values the number of days became **`r no.days.cmp`**.
+Initially the days where **53**, but with imputed NA values the number of days became **61**.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -149,7 +160,8 @@ To compare the activity between weekdays and weekends we will use the dataset wi
 
 First we separate the dataset into *weekday* and *weekend* observations, by **adding a new factor variable** in the dataset with two levels ("weekday" and "weekend") indicating whether a given date is a weekday or weekend day.    
 Note that when we compare a day name it is important to make sure we are using the **correct locale**, since days have different names in different languages.
-```{r echo=TRUE, results = "hide"}
+
+```r
 #set locale to US so that comparison of day names is in English
 loc <- Sys.getlocale(category = "LC_TIME")    #store current locale settings
 #be careful: locale ID depends on OS
@@ -177,7 +189,8 @@ Sys.setlocale("LC_TIME", loc)
 ```
 
 The following plot presents the 5-minute intervals (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
-```{r workdays_plot, echo=TRUE, fig.height = 6}
+
+```r
 suppressMessages(library(lattice))
 plot <- 
     xyplot(steps ~ interval | workday, 
@@ -195,5 +208,7 @@ plot <-
            )
 print(plot)
 ```
+
+![](PA1_template_files/figure-html/workdays_plot-1.png) 
 
 As expected, during weekends we have less activity early in the morning (it presents a peak after 8:00 in weekdays), while the activity seems to be more equally distributed across the day in the weekends than in weekdays, where another peak appears around 19:00.
